@@ -5,9 +5,18 @@ classes:
     Dino: This class contains the behaviour of the dino.
     Status: This class contains the status of the dino as an enum.
 """
+
 # pylint: disable=no-member
+# pylint: disable=unused-private-member
+
 from enum import Enum
+from typing import Final
+
 import pygame as pg
+
+from obstacles import GameElement
+from recourses import load_image, seperate_images
+
 
 class Status(Enum):
     """This class contains the status of the dino.
@@ -17,29 +26,33 @@ class Status(Enum):
         JUMPING: The dino is jumping.
         SNEAKING: The dino is sneaking.
     """
+
     RUNNING = 1
     JUMPING = 2
     SNEAKING = 3
 
 
-class Dino:
+class Dino(GameElement):
     """This class contains the behaviour of the dino.
     The dino is the main character of the game and is controlled by the player.
     It can run, jump and sneak.
     Atributes:
         position: The vertical position of the dino.
         status: The status of the dino as an enum of the Status class.
+        color_theme: The color theme of the dino as a string.
 
     Methods:
-        run: sets the dino parameters to running state.
-        jump: sets the dino parameters to jumping state.
-        sneak: sets the dino parameters to sneaking state.
         update: calls the specific method for the current state of the dino.
         check_collision: checks if the dino collides with an object.
     """
+
     def __init__(self) -> None:
-        self.position: int = 20
+        super().__init__(20, 100)
         self.status: Status = Status.RUNNING
+
+        self.running_image: tuple[list[pg.Surface], pg.Rect]
+        self.sneaking_image: tuple[list[pg.Surface], pg.Rect]
+        self.load_images()
 
     def process_input(self, event: pg.event.Event) -> None:
         """This function gets the input from the user.
@@ -50,39 +63,60 @@ class Dino:
 
         Args:
             event: The event that was triggered by the user
-        
+
         Variables:
-            jump_keys: list of integers that represent the keys that make the dino jump.
-            sneak_keys: list of integers that represent the keys that make the dino sneak.
+            JUMP_KEYS: list of integers that represent
+            the keys that make the dino jump.
+            SNEAK_KEYS: list of integers that represent
+            the keys that make the dino sneak.
 
         Examples:
             >>> dino: Dino = Dino()
             >>> for event in pg.event.get():
             >>>     dino.process_input(event)
         """
-        jump_keys: list[int] = [pg.K_UP, pg.K_SPACE]
-        sneak_keys: list[int] = [pg.K_DOWN]
+        JUMP_KEYS: Final[list[int]] = [  # pylint: disable=invalid-name
+            pg.K_UP,
+            pg.K_SPACE,
+        ]
+        SNEAK_KEYS: Final[list[int]] = [pg.K_DOWN]  # pylint: disable=invalid-name
 
         if event.type == pg.KEYDOWN:
-            if event.key in jump_keys and self.status == Status.RUNNING:
+            if event.key in JUMP_KEYS and self.status == Status.RUNNING:
                 self.status = Status.JUMPING
-            if event.key in sneak_keys and self.status == Status.RUNNING:
+            if event.key in SNEAK_KEYS and self.status == Status.RUNNING:
                 self.status = Status.SNEAKING
         if event.type == pg.KEYUP:
-            if event.key in sneak_keys and self.status == Status.SNEAKING:
+            if event.key in SNEAK_KEYS and self.status == Status.SNEAKING:
                 self.status = Status.RUNNING
 
-    def run(self) -> None:
+    def __run(self) -> None:
         raise NotImplementedError("Subclasses must implement the run method.")
 
-    def jump(self) -> None:
+    def __jump(self) -> None:
         raise NotImplementedError("Subclasses must implement the jump method.")
 
-    def sneak(self) -> None:
+    def __sneak(self) -> None:
         raise NotImplementedError("Subclasses must implement the sneak method.")
 
-    def update(self) -> None:
-        raise NotImplementedError("Subclasses must implement the update method.")
-
     def check_collision(self) -> bool:
-        raise NotImplementedError("Subclasses must implement the check_collision method.")
+        """This function checks if the dino collides with an object."""
+        raise NotImplementedError(
+            "Subclasses must implement the check_collision method."
+        )
+
+    def load_images(self) -> None:
+        """This function loads the images for the dino."""
+        self.running_image = seperate_images(load_image("dino_running.png")[0], (5, 1))
+        self.sneaking_image = seperate_images(
+            load_image("dino_sneaking.png")[0], (2, 1)
+        )
+
+    def update(self, speed: float = 0) -> None:
+        super().update(speed)
+        if self.status == Status.RUNNING:
+            self.__run()
+        if self.status == Status.JUMPING:
+            self.__jump()
+        if self.status == Status.SNEAKING:
+            self.__sneak()

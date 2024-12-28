@@ -15,19 +15,17 @@ class Counter:
         score: The current score of the player.
         frame_counter: Counts the frames passing. It is set to 0 every 3 frames.
         highscore: The highscore from previous games. It's loaded from a file.
-    
+
     Methods:
         count: Increases the score by one every 3 frames.
         save_highscore: Saves the current highscore to a file.
-        load_highscore: Loads the highscore from a file. If the file does not exist, it returns 0.
         __int__: Returns the current score of the player.
     """
 
     def __init__(self) -> None:
         self.score: int = 0
         self.frame_counter: int = 0
-        self.highscore: int = self.load_highscore()
-
+        self.highscore: int = self.__load_highscore()
 
     def count(self) -> int:
         """This method is responsible for counting the players score.
@@ -53,7 +51,7 @@ class Counter:
         with open("highscore.txt", "w", encoding="utf-8") as file:
             file.write(str(self.highscore))
 
-    def load_highscore(self) -> int:
+    def __load_highscore(self) -> int:
         """This method loads the highscore from a file.
         If the file does not exist, it returns 0.
 
